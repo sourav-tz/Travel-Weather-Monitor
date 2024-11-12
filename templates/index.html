@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Travel Destination Weather Monitor</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: Garamond, Arial, sans-serif;
+            background-color: #eef2f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* Form Styles */
+        form {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        form input[type="text"] {
+            width: 350px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #bbb;
+            font-size: 1rem;
+            outline: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s ease;
+        }
+        form input[type="text"]:focus {
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+        }
+        form button {
+            padding: 12px 25px;
+            border-radius: 8px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s;
+        }
+        form button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        /* Grid and Card Styles */
+        .grid-containerA {
+            display: grid;
+            gap: 25px;
+            grid-template-columns: 1fr 1fr;
+            padding: 0 20px;
+        }
+
+        /* Center card when there's only one city */
+        .grid-containerA.single-card {
+            display: flex;
+            justify-content: center;
+        }
+
+        .city-card {
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            background-color: #fff;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .city-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+        .city-card h2 {
+            font-size: 2rem;
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+
+        /* .grid-container for 3-column layout */
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            align-items: center;
+            font-weight: bold;
+            padding: 20px 0;
+            color: #666;
+        }
+
+        /* Weather Details */
+        .weather-icon {
+            width: 90px;
+            height: 90px;
+        }
+        .weather-condition {
+            font-size: 1.2rem;
+            color: #555;
+            margin-top: 10px;
+        }
+        .temperature {
+            font-size: 3rem;
+            color: #ff4500;
+            font-weight: bold;
+            margin: 0;
+            margin-top: 10px;
+        }
+        .feels-like {
+            font-size: 1.1rem;
+            color: #666;
+            margin-top: 39px;
+        }
+
+        /* Humidity, Wind, AQI */
+        .weather-details p {
+            margin: 5px 0;
+            font-size: 1.1rem;
+        }
+        .aqi-badge {
+            background-color: var(--aqi-color, #666);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 1rem;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        /* Forecast Plot */
+        .forecast-plot {
+            width: 100%;
+            height: auto;
+            margin-top: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Error Message */
+        .error-message {
+            text-align: center;
+            color: red;
+            font-size: 1.1rem;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Travel Destination Weather Monitor</h1>
+
+    <!-- Input Form for City Names -->
+    <form method="POST">
+        <input type="text" id="city" name="city" placeholder="Enter cities separated by commas" required>
+        <button type="submit">Get Weather</button>
+    </form>
+
+    <!-- Error Message for Invalid City Names -->
+    {% if weather_data and weather_data[0][0].get("error") %}
+        <div class="error-message">City not found. Please provide a correct name and try again!</div>
+    {% endif %}
+
+    <!-- Grid for Displaying Weather Information -->
+    <div class="grid-containerA {% if weather_data|length == 1 %}single-card{% endif %}">
+        {% for info, plot_path in weather_data %}
+        {% if info.city %}
+        <div class="city-card">
+            <h2>{{ info.city }}, {{ info.country }}</h2>
+
+            <!-- Weather Details in 3-Column Layout -->
+            <div class="grid-container">
+                <!-- Column 1: Icon and Condition -->
+                <div>
+                    <img src="{{ info.icon_path }}" alt="Weather icon for {{ info.condition }}" class="weather-icon">
+                    <p class="weather-condition">{{ info.condition }}</p>
+                </div>
+
+                <!-- Column 2: Temperature and Feels Like -->
+                <div>
+                    <p class="temperature">{{ info.temperature }}°C</p>
+                    <p class="feels-like">Feels Like: {{ info.feels_like }}°C</p>
+                </div>
+
+                <!-- Column 3: Humidity, Wind Speed, and AQI -->
+                <div style="text-align: left;margin-top: 5px;">
+                    <p>Humidity: {{ info.humidity }}%</p>
+                    <p>Wind Speed: {{ info.wind_speed }} m/s</p>
+                    <p>Visibility: {{ info.visibility }} m</p>
+
+                    {% if info.aqi_description %}
+                    <p style="background-color: {{ info.aqi_color }}; color:white; width: 70%; border-radius:5px; font-size:1.1rem; padding:8px;text-align:center; margin-top: 30px;">
+                        AQI: {{ info.aqi_description }}
+                    </p>
+                    {% else %}
+                        <p>AQI: Data not available</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Temperature Forecast Plot -->
+            <img src="{{ plot_path }}" alt="Temperature forecast for {{ info.city }}" class="forecast-plot">
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+</body>
+</html>
